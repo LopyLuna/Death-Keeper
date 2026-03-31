@@ -33,7 +33,7 @@ public class DeathSnapshotData extends SavedData {
 
     public static List<DeathSnapshot> getSnapshots(ServerLevel level, BlockPos pos) {
         var snaps = new ArrayList<DeathSnapshot>();
-        var dim = level.dimension().location();
+        var dim = level.dimension().identifier();
         for (var snap : getSnapshots(level)) {
             if (!snap.dim.equals(dim)) continue;
             if (!snap.pos.equals(pos)) continue;

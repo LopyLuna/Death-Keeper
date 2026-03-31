@@ -3,7 +3,7 @@ package dev.lopyluna.death_keeper;
 import com.mojang.logging.LogUtils;
 import dev.lopyluna.death_keeper.gravestone.GravestoneBlock;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.CreativeModeTabs;
@@ -20,6 +20,7 @@ import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import org.slf4j.Logger;
 
+@SuppressWarnings({"NullableProblems", "unused"})
 @Mod(DeathKeeper.MOD_ID)
 public class DeathKeeper {
     public static final String MOD_ID = "death_keeper";
@@ -47,7 +48,7 @@ public class DeathKeeper {
         if (event.getTabKey() == CreativeModeTabs.BUILDING_BLOCKS) event.accept(GRAVESTONE_ITEM);
     }
 
-    public static ResourceLocation loc(String loc) {
-        return ResourceLocation.fromNamespaceAndPath(MOD_ID, loc);
+    public static Identifier loc(String loc) {
+        return Identifier.fromNamespaceAndPath(MOD_ID, loc);
     }
 }

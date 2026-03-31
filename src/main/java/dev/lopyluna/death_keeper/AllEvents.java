@@ -15,6 +15,7 @@ import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
@@ -63,7 +64,7 @@ public class AllEvents {
         var type = entity.getType();
         var pairA = getOrCreateSnapshot(level, pos, type);
         var snap = pairA.getFirst();
-        snap.dim = level.dimension().location();
+        snap.dim = level.dimension().identifier();
         snap.uuid = entity.getUUID();
         snap.entityType = type;
         snap.dir = entity.getDirection();
@@ -113,7 +114,7 @@ public class AllEvents {
         var type = entity.getType();
         var pairA = getOrCreateSnapshot(level, pos, type);
         var snap = pairA.getFirst();
-        snap.dim = level.dimension().location();
+        snap.dim = level.dimension().identifier();
         snap.uuid = entity.getUUID();
         snap.entityType = type;
         snap.dir = entity.getDirection();
@@ -232,14 +233,14 @@ public class AllEvents {
             potential = getNearestGrave(uuid, type, level, origin, Config.graveMaxDistance);
             origin = potential == null ? origin : potential.pos;
         }
-        if (!level.getBlockState(origin).is(GRAVESTONE)) level.setBlock(origin, GRAVESTONE.get().defaultBlockState().setValue(GravestoneBlock.FLOATING, !level.getFluidState(below).isEmpty()).setValue(GravestoneBlock.BREAKABLE, false).setValue(GravestoneBlock.FACING, dir), 3);
+        if (!level.getBlockState(origin).is(GRAVESTONE)) level.setBlock(origin, GRAVESTONE.get().defaultBlockState().setValue(GravestoneBlock.FLOATING, !level.getFluidState(below).isEmpty()).setValue(GravestoneBlock.BREAKABLE, false).setValue(GravestoneBlock.FACING, dir), Block.UPDATE_NEIGHBORS | Block.UPDATE_CLIENTS);
         if (Config.coarseDirtBelowGraves) {
             var belowPos = origin.below();
             var belowState = level.getBlockState(belowPos);
             var belowDir = origin.below().relative(dir);
             var belowDirState = level.getBlockState(belowDir);
-            if (belowState.is(BlockTags.DIRT) && !belowState.is(Blocks.COARSE_DIRT)) level.setBlock(belowPos, Blocks.COARSE_DIRT.defaultBlockState(), 3);
-            if (belowDirState.is(BlockTags.DIRT) && !belowDirState.is(Blocks.COARSE_DIRT)) level.setBlock(belowDir, Blocks.COARSE_DIRT.defaultBlockState(), 3);
+            if (belowState.is(BlockTags.DIRT) && !belowState.is(Blocks.COARSE_DIRT)) level.setBlock(belowPos, Blocks.COARSE_DIRT.defaultBlockState(), Block.UPDATE_NEIGHBORS | Block.UPDATE_CLIENTS);
+            if (belowDirState.is(BlockTags.DIRT) && !belowDirState.is(Blocks.COARSE_DIRT)) level.setBlock(belowDir, Blocks.COARSE_DIRT.defaultBlockState(), Block.UPDATE_NEIGHBORS | Block.UPDATE_CLIENTS);
         }
         return new Pair<>(potential, origin);
     }
@@ -310,7 +311,7 @@ public class AllEvents {
     }
 
     public static DeathSnapshot getNearestGrave(UUID uuid, EntityType<?> type, ServerLevel level, BlockPos pos, double max) {
-        var dim = level.dimension().location();
+        var dim = level.dimension().identifier();
 
         DeathSnapshot nearest = null;
         var nearestDist = max * max;

@@ -23,8 +23,9 @@ import java.util.stream.Collectors;
 
 public class GravestoneCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext context) {
+
         dispatcher.register(Commands.literal("data")
-                .requires(s -> s.hasPermission(2))
+                .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                 .then(Commands.literal("get").then(Commands.literal("gravestone").then(Commands.argument("pos", BlockPosArgument.blockPos())
                         .executes(c -> {
                             var level = c.getSource().getLevel();
@@ -43,7 +44,7 @@ public class GravestoneCommand {
         )));
 
         dispatcher.register(Commands.literal("gravestone")
-                .requires(s -> s.hasPermission(2))
+                .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                 .then(Commands.literal("place").then(Commands.argument("target", EntityArgument.entity()).then(Commands.argument("pos", BlockPosArgument.blockPos())
                         .executes(c -> {
                             var level = c.getSource().getLevel();
@@ -51,7 +52,7 @@ public class GravestoneCommand {
                             var target = EntityArgument.getEntity(c, "target");
 
                             var snap = new DeathSnapshot();
-                            snap.dim = level.dimension().location();
+                            snap.dim = level.dimension().identifier();
                             snap.uuid = target.getUUID();
                             snap.entityType = target.getType();
                             snap.dir = target.getDirection();
