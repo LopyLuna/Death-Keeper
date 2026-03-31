@@ -9,6 +9,8 @@ import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
 import net.minecraft.commands.arguments.item.ItemArgument;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Display;
@@ -35,7 +37,7 @@ public class GravestoneCommand {
                             }
                             int i = 1;
                             HolderLookup.Provider provider = level.registryAccess();
-                            for (var snap : snaps) c.getSource().sendSuccess(() -> Component.literal("Snapshot " + i + " - ").append(NbtUtils.toPrettyComponent(DeathSnapshot.writeSnapshot(snap, provider))), false);
+                            for (var snap : snaps) c.getSource().sendSuccess(() -> Component.literal("Snapshot " + i + " - ").append(NbtUtils.toPrettyComponent(DeathSnapshot.CODEC.encodeStart(provider.createSerializationContext(NbtOps.INSTANCE), snap).result().orElse(new CompoundTag()))), false);
                             return 0;
                         })
                 )
@@ -120,7 +122,7 @@ public class GravestoneCommand {
                             }
                             int i = 1;
                             HolderLookup.Provider provider = level.registryAccess();
-                            for (var snap : snaps) c.getSource().sendSuccess(() -> Component.literal("Snapshot " + i + " - ").append(NbtUtils.toPrettyComponent(DeathSnapshot.writeSnapshot(snap, provider))), false);
+                            for (var snap : snaps) c.getSource().sendSuccess(() -> Component.literal("Snapshot " + i + " - ").append(NbtUtils.toPrettyComponent(DeathSnapshot.CODEC.encodeStart(provider.createSerializationContext(NbtOps.INSTANCE), snap).result().orElse(new CompoundTag()))), false);
                             return 0;
                         })
                 ))
@@ -174,57 +176,68 @@ public class GravestoneCommand {
                                 c.getSource().sendFailure(Component.literal("No Gravestone Exist"));
                                 return -1;
                             }
+                            var removal = new ArrayList<DeathSnapshot>();
                             for (var snap : snaps) {
                                 if (snap.uuidText != null && level.getEntity(snap.uuidText) instanceof Display.TextDisplay text) text.discard();
-                                DeathSnapshotData.remove(level, snap);
+                                removal.add(snap);
                             }
+                            for (var snap : removal) DeathSnapshotData.remove(level, snap);
                             level.destroyBlock(pos, true);
                             return 0;
                         })
                 ))
                 .then(Commands.literal("claim").then(Commands.argument("target", EntityArgument.player()).then(Commands.argument("pos", BlockPosArgument.blockPos())
                         .executes(c -> {
-                            var level = c.getSource().getLevel();
-                            var pos = BlockPosArgument.getLoadedBlockPos(c, "pos");
-                            var snaps = DeathSnapshotData.getSnapshots(level, pos);
-                            if (snaps.isEmpty()) {
-                                c.getSource().sendFailure(Component.literal("No Snapshot Exist"));
+                            try {
+                                var level = c.getSource().getLevel();
+                                var pos = BlockPosArgument.getLoadedBlockPos(c, "pos");
+                                var snaps = DeathSnapshotData.getSnapshots(level, pos);
+                                if (snaps.isEmpty()) {
+                                    c.getSource().sendFailure(Component.literal("No Snapshot Exist"));
+                                    return -1;
+                                }
+                                var target = EntityArgument.getPlayer(c, "target");
+                                var targetSize = snaps.size();
+                                var size = 0;
+                                var inv = target.getInventory();
+                                int slot = inv.getFreeSlot();
+
+                                var totalItems = 0;
+                                var items = 0;
+                                var removal = new ArrayList<DeathSnapshot>();
+                                for (var snap : snaps) {
+                                    if (slot == -1) break;
+                                    if (!snap.entityType.equals(EntityType.PLAYER) || snap.uuid.equals(target.getUUID())) {
+                                        totalItems += snap.inv.size();
+                                        var remove = new ArrayList<ItemStack>();
+                                        for (var stack : snap.inv) {
+                                            slot = inv.getFreeSlot();
+                                            if (slot == -1) break;
+                                            ItemHandlerHelper.giveItemToPlayer(target, stack);
+                                            remove.add(stack);
+                                            items++;
+                                        }
+                                        snap.inv = new ArrayList<>(snap.inv);
+                                        snap.inv.removeAll(remove);
+                                        if (slot == -1) break;
+                                        if (snap.uuidText != null && level.getEntity(snap.uuidText) instanceof Display.TextDisplay text)
+                                            text.discard();
+                                        removal.add(snap);
+                                        size++;
+                                    }
+                                }
+                                for (var snap : removal) DeathSnapshotData.remove(level, snap);
+                                if (size >= targetSize) level.destroyBlock(pos, true);
+                                if (items != 0) {
+                                    int finalItems = items;
+                                    int finalTotalItems = totalItems;
+                                    c.getSource().sendSuccess(() -> Component.literal("Successfully Received " + finalItems + " out of " + finalTotalItems + " Items"), false);
+                                } else c.getSource().sendFailure(Component.literal("Unable to Receive Items"));
+                                return 0;
+                            } catch (Exception e) {
+                                e.printStackTrace(System.err);
                                 return -1;
                             }
-                            var target = EntityArgument.getPlayer(c, "target");
-                            var targetSize = snaps.size();
-                            var size = 0;
-                            var inv = target.getInventory();
-                            int slot = inv.getFreeSlot();
-
-                            var totalItems = 0;
-                            var items = 0;
-                            for (var snap : snaps) {
-                                if (slot == -1) break;
-                                if (!snap.entityType.equals(EntityType.PLAYER) || snap.uuid.equals(target.getUUID())) {
-                                    totalItems += snap.inv.size();
-                                    var remove = new ArrayList<ItemStack>();
-                                    for (var stack : snap.inv) {
-                                        slot = inv.getFreeSlot();
-                                        if (slot == -1) break;
-                                        ItemHandlerHelper.giveItemToPlayer(target, stack);
-                                        remove.add(stack);
-                                        items++;
-                                    }
-                                    snap.inv.removeAll(remove);
-                                    if (slot == -1) break;
-                                    if (snap.uuidText != null && level.getEntity(snap.uuidText) instanceof Display.TextDisplay text) text.discard();
-                                    DeathSnapshotData.remove(level, snap);
-                                    size++;
-                                }
-                            }
-                            if (size >= targetSize) level.destroyBlock(pos, true);
-                            if (items != 0) {
-                                int finalItems = items;
-                                int finalTotalItems = totalItems;
-                                c.getSource().sendSuccess(() -> Component.literal("Successfully Received " + finalItems + " out of " + finalTotalItems + " Items"), false);
-                            } else c.getSource().sendFailure(Component.literal("Unable to Receive Items"));
-                            return 0;
                         })
                 )))
                 .then(Commands.literal("list").then(Commands.argument("target", EntityArgument.entity())

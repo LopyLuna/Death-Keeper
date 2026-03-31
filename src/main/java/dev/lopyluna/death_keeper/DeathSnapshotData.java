@@ -1,23 +1,29 @@
 package dev.lopyluna.death_keeper;
 
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.saveddata.SavedData;
+import net.minecraft.world.level.saveddata.SavedDataType;
 
 import java.util.ArrayList;
 import java.util.List;
 
-@SuppressWarnings("NullableProblems")
 public class DeathSnapshotData extends SavedData {
     public static final String NAME = "death_snapshots";
     public final List<DeathSnapshot> snapshots = new ArrayList<>();
 
+    public static final Codec<DeathSnapshotData> CODEC = RecordCodecBuilder.create(instance ->
+            instance.group(DeathSnapshot.CODEC.listOf().fieldOf("Snapshots").forGetter(data -> data.snapshots)).apply(instance, snaps -> {
+                var data = new DeathSnapshotData();
+                data.snapshots.addAll(snaps);
+                return data;
+            })
+    );
+
     public static DeathSnapshotData get(ServerLevel level) {
-        return level.getDataStorage().computeIfAbsent(new Factory<>(DeathSnapshotData::new, DeathSnapshotData::load), NAME);
+        return level.getDataStorage().computeIfAbsent(new SavedDataType<>(NAME, DeathSnapshotData::new, CODEC));
     }
 
     public static List<DeathSnapshot> getSnapshots(ServerLevel level) {
@@ -46,23 +52,5 @@ public class DeathSnapshotData extends SavedData {
         var data = DeathSnapshotData.get(level);
         data.snapshots.remove(snap);
         data.setDirty();
-    }
-
-    public static DeathSnapshotData load(CompoundTag nbt, HolderLookup.Provider provider) {
-        var data = new DeathSnapshotData();
-        var list = nbt.getList("Snapshots", 10);
-        for (int i = 0; list.size() > i; i++) {
-            var snapNbt = list.getCompound(i);
-            data.snapshots.add(DeathSnapshot.readSnapshot(snapNbt, provider));
-        }
-        return data;
-    }
-
-    @Override
-    public CompoundTag save(CompoundTag nbt, HolderLookup.Provider provider) {
-        ListTag list = new ListTag();
-        for (var snap : snapshots) list.add(DeathSnapshot.writeSnapshot(snap, provider));
-        nbt.put("Snapshots", list);
-        return nbt;
     }
 }

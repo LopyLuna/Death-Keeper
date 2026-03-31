@@ -1,6 +1,7 @@
 package dev.lopyluna.death_keeper.gravestone;
 
 import dev.lopyluna.death_keeper.Config;
+import dev.lopyluna.death_keeper.DeathSnapshot;
 import dev.lopyluna.death_keeper.DeathSnapshotData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -67,6 +68,7 @@ public class GravestoneBlock extends Block implements SimpleWaterloggedBlock {
             var size = 0;
             var inv = player.getInventory();
             int slot = inv.getFreeSlot();
+            var removal = new ArrayList<DeathSnapshot>();
             for (var snap : snaps) {
                 if (slot == -1) break;
                 if (!snap.entityType.equals(EntityType.PLAYER) || snap.uuid.equals(player.getUUID())) {
@@ -80,14 +82,16 @@ public class GravestoneBlock extends Block implements SimpleWaterloggedBlock {
                         ItemHandlerHelper.giveItemToPlayer(player, stack);
                         remove.add(stack);
                     }
+                    snap.inv = new ArrayList<>(snap.inv);
                     snap.inv.removeAll(remove);
                     if (slot == -1) break;
                     if (snap.uuidText != null && server.getEntity(snap.uuidText) instanceof Display.TextDisplay text) text.discard();
-                    DeathSnapshotData.remove(server, snap);
+                    removal.add(snap);
                     snap.lifespan = Config.maxGraveLifespan;
                     size++;
                 }
             }
+            for (var snap : removal) DeathSnapshotData.remove(server, snap);
             if (size >= targetSize) level.destroyBlock(pos, true);
             if (size > 0) return InteractionResult.SUCCESS;
         }

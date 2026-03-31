@@ -23,6 +23,7 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDropsEvent;
 import net.neoforged.neoforge.event.entity.living.LivingExperienceDropEvent;
+import net.neoforged.neoforge.event.level.LevelEvent;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
 import net.neoforged.neoforge.items.ItemHandlerHelper;
 
@@ -192,7 +193,6 @@ public class AllEvents {
         snap.lifespan = Config.maxGraveLifespan;
     }
 
-
     @SuppressWarnings("deprecation")
     public static Pair<DeathSnapshot, BlockPos> placeGrave(UUID uuid, EntityType<?> type, ServerLevel level, BlockPos origin, Direction dir) {
         var maxH = level.getMaxY();
@@ -340,6 +340,16 @@ public class AllEvents {
         text.getEntityData().set(TextDisplayAccessor.getDataStyle(), (byte) 2);
         level.addFreshEntity(text);
         return text;
+    }
+
+    @SubscribeEvent
+    public static void onSave(LevelEvent.Save event) {
+        if (event.getLevel() instanceof ServerLevel level) DeathSnapshotData.get(level).setDirty();
+    }
+
+    @SubscribeEvent
+    public static void onUnload(LevelEvent.Unload event) {
+        if (event.getLevel() instanceof ServerLevel level) DeathSnapshotData.get(level).setDirty();
     }
 
     public static List<ItemStack> mergeStacks(List<ItemStack> stacks) {
