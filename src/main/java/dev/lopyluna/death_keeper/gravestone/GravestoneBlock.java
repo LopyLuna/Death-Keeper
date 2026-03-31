@@ -5,6 +5,7 @@ import dev.lopyluna.death_keeper.DeathSnapshotData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Display;
 import net.minecraft.world.entity.EntityType;
@@ -17,7 +18,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
-import net.minecraft.world.level.block.state.properties.DirectionProperty;
+import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.BlockHitResult;
@@ -29,7 +30,7 @@ import java.util.ArrayList;
 
 @SuppressWarnings({"deprecation", "NullableProblems"})
 public class GravestoneBlock extends Block implements SimpleWaterloggedBlock {
-    public static final DirectionProperty FACING = HorizontalDirectionalBlock.FACING;
+    public static final EnumProperty<Direction> FACING = HorizontalDirectionalBlock.FACING;
     public static final BooleanProperty FLOATING = BooleanProperty.create("float");
     public static final BooleanProperty BREAKABLE = BooleanProperty.create("breakable");
     public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
@@ -45,7 +46,7 @@ public class GravestoneBlock extends Block implements SimpleWaterloggedBlock {
         float f = state.getDestroySpeed(level, pos);
 
         int i = net.neoforged.neoforge.event.EventHooks.doPlayerHarvestCheck(player, state, level, pos) ? 30 : 100;
-        return player.getDigSpeed(state, pos) / f / (float)i;
+        return player.getDestroySpeed(state, pos) / f / (float)i;
     }
 
     @Override
@@ -94,9 +95,9 @@ public class GravestoneBlock extends Block implements SimpleWaterloggedBlock {
     }
 
     @Override
-    protected BlockState updateShape(BlockState state, Direction direction, BlockState blockState, LevelAccessor level, BlockPos pos, BlockPos blockPos) {
-        if (state.getValue(WATERLOGGED)) level.scheduleTick(pos, Fluids.WATER, Fluids.WATER.getTickDelay(level));
-        return super.updateShape(state, direction, blockState, level, pos, blockPos).setValue(GravestoneBlock.FLOATING, !level.getFluidState(pos.below()).isEmpty());
+    protected BlockState updateShape(BlockState state, LevelReader level, ScheduledTickAccess scheduledTickAccess, BlockPos pos, Direction direction, BlockPos neighborPos, BlockState neighborState, RandomSource random) {
+        if (level instanceof LevelAccessor accessor && state.getValue(WATERLOGGED)) accessor.scheduleTick(pos, Fluids.WATER, Fluids.WATER.getTickDelay(level));
+        return super.updateShape(state, level, scheduledTickAccess, pos, direction, neighborPos, neighborState, random).setValue(GravestoneBlock.FLOATING, !level.getFluidState(pos.below()).isEmpty());
     }
 
     @Override

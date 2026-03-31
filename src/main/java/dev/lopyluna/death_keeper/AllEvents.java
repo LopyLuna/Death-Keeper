@@ -195,8 +195,8 @@ public class AllEvents {
 
     @SuppressWarnings("deprecation")
     public static Pair<DeathSnapshot, BlockPos> placeGrave(UUID uuid, EntityType<?> type, ServerLevel level, BlockPos origin, Direction dir) {
-        var maxH = level.getMaxBuildHeight();
-        var minH = level.getMinBuildHeight();
+        var maxH = level.getMaxY();
+        var minH = level.getMinY();
         int max = 10;
         BlockPos bestPos = null;
         var bestDist = (double)max*(double)max+(double)max*(double)max+(double)max*(double)max;
