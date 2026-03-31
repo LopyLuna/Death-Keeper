@@ -25,7 +25,6 @@ import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.neoforged.neoforge.items.ItemHandlerHelper;
 
 import java.util.ArrayList;
 
@@ -79,7 +78,7 @@ public class GravestoneBlock extends Block implements SimpleWaterloggedBlock {
                     for (var stack : snap.inv) {
                         slot = inv.getFreeSlot();
                         if (slot == -1) break;
-                        ItemHandlerHelper.giveItemToPlayer(player, stack);
+                        inv.placeItemBackInInventory(stack);
                         remove.add(stack);
                     }
                     snap.inv = new ArrayList<>(snap.inv);

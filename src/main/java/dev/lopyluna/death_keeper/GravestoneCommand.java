@@ -17,7 +17,6 @@ import net.minecraft.world.entity.Display;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.items.ItemHandlerHelper;
 
 import java.util.ArrayList;
 import java.util.stream.Collectors;
@@ -213,7 +212,7 @@ public class GravestoneCommand {
                                         for (var stack : snap.inv) {
                                             slot = inv.getFreeSlot();
                                             if (slot == -1) break;
-                                            ItemHandlerHelper.giveItemToPlayer(target, stack);
+                                            inv.placeItemBackInInventory(stack);
                                             remove.add(stack);
                                             items++;
                                         }

@@ -31,7 +31,7 @@ public class DeathKeeper {
     public static final TagKey<Block> GRAVESTONE_REPLACEABLE = TagKey.create(Registries.BLOCK, loc("gravestone_replaceable"));
 
     public static final DeferredBlock<Block> GRAVESTONE = BLOCKS.registerBlock("gravestone", GravestoneBlock::new,
-            BlockBehaviour.Properties.of().strength(1.5f, 6).requiresCorrectToolForDrops().noOcclusion().mapColor(MapColor.STONE));
+            () -> BlockBehaviour.Properties.of().strength(1.5f, 6).requiresCorrectToolForDrops().noOcclusion().mapColor(MapColor.STONE));
     public static final DeferredItem<BlockItem> GRAVESTONE_ITEM = ITEMS.registerSimpleBlockItem("gravestone", GRAVESTONE);
 
 

@@ -25,7 +25,6 @@ import net.neoforged.neoforge.event.entity.living.LivingDropsEvent;
 import net.neoforged.neoforge.event.entity.living.LivingExperienceDropEvent;
 import net.neoforged.neoforge.event.level.LevelEvent;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
-import net.neoforged.neoforge.items.ItemHandlerHelper;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -269,7 +268,7 @@ public class AllEvents {
 
             while (it.hasNext()) {
                 if (inv.getFreeSlot() == -1) break;
-                ItemHandlerHelper.giveItemToPlayer(player, it.next());
+                inv.placeItemBackInInventory(it.next());
                 it.remove();
             }
             if (stacks.isEmpty()) returnItemsQueue.remove(uuid);
