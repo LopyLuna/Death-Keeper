@@ -39,7 +39,7 @@ public class AllEvents {
     public static Map<UUID, List<ItemStack>> returnItemsQueue = new LinkedHashMap<>();
 
     public static List<ItemStack> getStacksQueue(UUID uuid) {
-        return returnItemsQueue.computeIfAbsent(uuid, u -> new ArrayList<>());
+        return returnItemsQueue.computeIfAbsent(uuid, _ -> new ArrayList<>());
     }
     public static void addStacksQueue(List<ItemStack> stacks, UUID uuid) {
         getStacksQueue(uuid).addAll(stacks);
@@ -68,7 +68,7 @@ public class AllEvents {
         snap.uuid = entity.getUUID();
         snap.entityType = type;
         snap.dir = entity.getDirection();
-        snap.exp = drops;
+        snap.exp += drops;
         if (snap.inv == null) snap.inv = new ArrayList<>();
 
         if (pairA.getSecond()) {
@@ -76,8 +76,10 @@ public class AllEvents {
             snap.pos = pairB.getSecond();
             var toMerge = pairB.getFirst();
 
-            if (toMerge != null) mergeSnapshot(toMerge, snap);
-            else {
+            if (toMerge != null) {
+                toMerge.exp += snap.exp;
+                toMerge.lifespan = Config.maxGraveLifespan;
+            } else {
                 var text = AllEvents.spawnTextDisplay(level, snap.pos, snap.uuid, snap.entityType);
                 snap.uuidText = text != null ? text.getUUID() : null;
                 DeathSnapshotData.add(level, snap);
@@ -118,7 +120,9 @@ public class AllEvents {
         snap.uuid = entity.getUUID();
         snap.entityType = type;
         snap.dir = entity.getDirection();
-        snap.inv = stacks;
+        if (snap.inv == null) snap.inv = new ArrayList<>();
+        snap.inv.addAll(stacks);
+        snap.inv = mergeStacks(snap.inv);
 
         var flag = pairA.getSecond();
         Pair<DeathSnapshot, BlockPos> pairB = null;
@@ -127,13 +131,12 @@ public class AllEvents {
             snap.pos = pairB.getSecond();
         }
 
-        var split = splitStacks(level.random, snap.inv);
+        var split = splitStacks(level.getRandom(), snap.inv);
         addStacksQueue(split.getFirst(), snap.uuid);
-        snap.inv = split.getSecond();
+        snap.inv = mergeStacks(split.getSecond());
 
         if (flag) {
             var toMerge = pairB.getFirst();
-
             if (toMerge != null) mergeSnapshot(toMerge, snap);
             else {
                 var text = AllEvents.spawnTextDisplay(level, snap.pos, snap.uuid, snap.entityType);
@@ -255,7 +258,7 @@ public class AllEvents {
         if (!(event.getLevel() instanceof ServerLevel level)) return;
         if (level.getGameTime() % 3 != 0) return;
 
-        for (var player : level.getPlayers(s -> true)) {
+        for (var player : level.getPlayers(_ -> true)) {
             var uuid = player.getUUID();
             if (!returnItemsQueue.containsKey(uuid)) continue;
             if (!player.isAlive() || player.isSpectator()) continue;

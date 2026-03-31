@@ -6,6 +6,7 @@ import dev.lopyluna.death_keeper.DeathSnapshotData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Display;
@@ -81,6 +82,7 @@ public class GravestoneBlock extends Block implements SimpleWaterloggedBlock {
                         inv.placeItemBackInInventory(stack);
                         remove.add(stack);
                     }
+                    if (!remove.isEmpty()) player.playSound(SoundEvents.ITEM_PICKUP, 0.2F, ((level.getRandom().nextFloat() - level.getRandom().nextFloat()) * 0.7F + 1.0F) * 2.0F);
                     snap.inv = new ArrayList<>(snap.inv);
                     snap.inv.removeAll(remove);
                     if (slot == -1) break;

@@ -13,6 +13,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.Display;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -81,7 +82,7 @@ public class GravestoneCommand {
                             var item = ItemArgument.getItem(c, "item");
                             var count = IntegerArgumentType.getInteger(c, "count");
                             var snap = snaps.getFirst();
-                            snap.inv.add(item.createItemStack(count, false));
+                            snap.inv.add(item.createItemStack(count));
                             snap.inv = AllEvents.mergeStacks(snap.inv);
                             return 0;
                         })
@@ -98,7 +99,7 @@ public class GravestoneCommand {
                             var filter = ItemArgument.getItem(c, "item");
                             var count = IntegerArgumentType.getInteger(c, "count");
                             var snap = snaps.getFirst();
-                            var item = filter.getItem();
+                            var item = filter.item();
                             var flag = true;
                             for (var i = 0; snap.inv.size() > i; i++) {
                                 var stack = snap.inv.get(i);
@@ -217,6 +218,7 @@ public class GravestoneCommand {
                                             remove.add(stack);
                                             items++;
                                         }
+                                        if (items > 0) target.playSound(SoundEvents.ITEM_PICKUP, 0.2F, ((level.getRandom().nextFloat() - level.getRandom().nextFloat()) * 0.7F + 1.0F) * 2.0F);
                                         snap.inv = new ArrayList<>(snap.inv);
                                         snap.inv.removeAll(remove);
                                         if (slot == -1) break;

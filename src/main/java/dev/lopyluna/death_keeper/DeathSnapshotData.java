@@ -23,7 +23,8 @@ public class DeathSnapshotData extends SavedData {
     );
 
     public static DeathSnapshotData get(ServerLevel level) {
-        return level.getDataStorage().computeIfAbsent(new SavedDataType<>(NAME, DeathSnapshotData::new, CODEC));
+
+        return level.getDataStorage().computeIfAbsent(new SavedDataType<>(DeathKeeper.loc(NAME), DeathSnapshotData::new, CODEC));
     }
 
     public static List<DeathSnapshot> getSnapshots(ServerLevel level) {
