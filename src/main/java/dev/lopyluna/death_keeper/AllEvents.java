@@ -2,6 +2,7 @@ package dev.lopyluna.death_keeper;
 
 import com.mojang.datafixers.util.Pair;
 import dev.lopyluna.death_keeper.gravestone.GravestoneBlock;
+import dev.lopyluna.death_keeper.kuramastone.GravestoneRemovedEvent;
 import dev.lopyluna.death_keeper.mixins.DisplayAccessor;
 import dev.lopyluna.death_keeper.mixins.TextDisplayAccessor;
 import net.minecraft.core.BlockPos;
@@ -20,6 +21,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDropsEvent;
 import net.neoforged.neoforge.event.entity.living.LivingExperienceDropEvent;
@@ -40,6 +42,7 @@ public class AllEvents {
     public static List<ItemStack> getStacksQueue(UUID uuid) {
         return returnItemsQueue.computeIfAbsent(uuid, u -> new ArrayList<>());
     }
+
     public static void addStacksQueue(List<ItemStack> stacks, UUID uuid) {
         getStacksQueue(uuid).addAll(stacks);
     }
@@ -296,7 +299,10 @@ public class AllEvents {
             removals.add(snap);
         }
         if (removals != null) {
-            for (var remove : removals) DeathSnapshotData.remove(level, remove);
+            for (var remove : removals) {
+                NeoForge.EVENT_BUS.post(new GravestoneRemovedEvent(remove));
+                DeathSnapshotData.remove(level, remove);
+            }
             removals.clear();
         }
     }
